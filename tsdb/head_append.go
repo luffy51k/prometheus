@@ -47,6 +47,7 @@ func (a *initAppender) SetOptions(opts *storage.AppendOptions) {
 }
 
 func (a *initAppender) Append(ref storage.SeriesRef, lset labels.Labels, t int64, v float64) (storage.SeriesRef, error) {
+
 	if a.app != nil {
 		return a.app.Append(ref, lset, t, v)
 	}
@@ -340,6 +341,15 @@ func (a *headAppender) SetOptions(opts *storage.AppendOptions) {
 }
 
 func (a *headAppender) Append(ref storage.SeriesRef, lset labels.Labels, t int64, v float64) (storage.SeriesRef, error) {
+
+	//toanbs
+	a.head.logger.Info("(Append) numSeries", "numSeries", a.head.numSeries.Load())
+	a.head.logger.Info("(Append) seriesLimit", "seriesLimit", a.head.seriesLimit)
+
+	if a.head.numSeries.Load() >= a.head.seriesLimit {
+		return 0, fmt.Errorf("(Append) time series limit reached: %d", a.head.seriesLimit)
+	}
+
 	// Fail fast if OOO is disabled and the sample is out of bounds.
 	// Otherwise a full check will be done later to decide if the sample is in-order or out-of-order.
 	if a.oooTimeWindow == 0 && t < a.minValidTime {
@@ -453,6 +463,13 @@ func (a *headAppender) AppendCTZeroSample(ref storage.SeriesRef, lset labels.Lab
 }
 
 func (a *headAppender) getOrCreate(lset labels.Labels) (s *memSeries, created bool, err error) {
+	// toanbs
+	// If it's a new series, check the limit
+	if a.head.numSeries.Load() >= a.head.seriesLimit {
+		return nil, false, fmt.Errorf("(getOrCreate) time series limit reached: %d", a.head.seriesLimit)
+	}
+	// ---end
+
 	// Ensure no empty labels have gotten through.
 	lset = lset.WithoutEmpty()
 	if lset.IsEmpty() {
