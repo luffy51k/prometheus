@@ -538,6 +538,8 @@ func main() {
 		os.Exit(2)
 	}
 
+	//toanbs
+
 	logger := promslog.New(&cfg.promslogConfig)
 	slog.SetDefault(logger)
 
@@ -1226,7 +1228,7 @@ func main() {
 	}
 	if !agentMode {
 		// TSDB.
-		opts := cfg.tsdb.ToTSDBOptions()
+		opts := cfg.tsdb.ToTSDBOptions(cfgFile.TimeSeriesLimit)
 		cancel := make(chan struct{})
 		g.Add(
 			func() error {
@@ -1781,6 +1783,9 @@ func (rm *readyScrapeManager) Get() (*scrape.Manager, error) {
 // tsdbOptions is tsdb.Option version with defined units.
 // This is required as tsdb.Option fields are unit agnostic (time).
 type tsdbOptions struct {
+	//toanbs
+	SeriesLimit uint64
+
 	WALSegmentSize                 units.Base2Bytes
 	MaxBlockChunkSegmentSize       units.Base2Bytes
 	RetentionDuration              model.Duration
@@ -1804,8 +1809,11 @@ type tsdbOptions struct {
 	EnableOOONativeHistograms      bool
 }
 
-func (opts tsdbOptions) ToTSDBOptions() tsdb.Options {
+func (opts tsdbOptions) ToTSDBOptions(SeriesLimit uint64) tsdb.Options {
 	return tsdb.Options{
+		//toanbs
+		SeriesLimit: SeriesLimit,
+
 		WALSegmentSize:                 int(opts.WALSegmentSize),
 		MaxBlockChunkSegmentSize:       int64(opts.MaxBlockChunkSegmentSize),
 		RetentionDuration:              int64(time.Duration(opts.RetentionDuration) / time.Millisecond),
