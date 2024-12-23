@@ -67,8 +67,11 @@ var (
 
 // Head handles reads and writes of time series data within a time window.
 type Head struct {
-	chunkRange               atomic.Int64
-	numSeries                atomic.Uint64
+	chunkRange atomic.Int64
+	numSeries  atomic.Uint64
+	//toanbs
+	seriesLimit uint64
+
 	minOOOTime, maxOOOTime   atomic.Int64 // TODO(jesusvazquez) These should be updated after garbage collection.
 	minTime, maxTime         atomic.Int64 // Current min and max of the samples included in the head. TODO(jesusvazquez) Ensure these are properly tracked.
 	minValidTime             atomic.Int64 // Mint allowed to be added to the head. It shouldn't be lower than the maxt of the last persisted block.
@@ -130,6 +133,14 @@ type Head struct {
 	memTruncationInProcess atomic.Bool
 	memTruncationCallBack  func() // For testing purposes.
 }
+
+// func (h *Head) SetSeriesLimit(param any) {
+// 	panic("unimplemented")
+// }
+
+// func (h *Head) SetSeriesLimit(param any) {
+// 	panic("unimplemented")
+// }
 
 type ExemplarStorage interface {
 	storage.ExemplarQueryable
@@ -293,6 +304,12 @@ func NewHead(r prometheus.Registerer, l *slog.Logger, wal, wbl *wlog.WL, opts *H
 	h.metrics = newHeadMetrics(h, r)
 
 	return h, nil
+}
+
+// toanbs
+// SetSeriesLimit sets the maximum allowed time series.
+func (h *Head) SetSeriesLimit(limit uint64) {
+	h.seriesLimit = limit
 }
 
 func (h *Head) resetInMemoryState() error {
