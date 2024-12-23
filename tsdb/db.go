@@ -97,6 +97,8 @@ func DefaultOptions() *Options {
 
 // Options of the DB storage.
 type Options struct {
+	// toanbs
+	SeriesLimit uint64
 	// Segments (wal files) max size.
 	// WALSegmentSize = 0, segment size is default size.
 	// WALSegmentSize > 0, segment size is WALSegmentSize.
@@ -779,7 +781,6 @@ func (db *DBReadOnly) Close() error {
 func Open(dir string, l *slog.Logger, r prometheus.Registerer, opts *Options, stats *DBStats) (db *DB, err error) {
 	var rngs []int64
 	opts, rngs = validateOpts(opts, nil)
-
 	return open(dir, l, r, opts, rngs, stats)
 }
 
@@ -978,6 +979,11 @@ func open(dir string, l *slog.Logger, r prometheus.Registerer, opts *Options, rn
 		headOpts.IsolationDisabled = opts.IsolationDisabled
 	}
 	db.head, err = NewHead(r, l, wal, wbl, headOpts, stats.Head)
+	// ToanBS: Set the series limit
+	l.Info("INFO:", "SeriesLimit", opts.SeriesLimit)
+	db.head.SetSeriesLimit(opts.SeriesLimit)
+	// -- End
+
 	if err != nil {
 		return nil, err
 	}
