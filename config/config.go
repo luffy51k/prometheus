@@ -146,6 +146,10 @@ func LoadFile(filename string, agentMode bool, logger *slog.Logger) (*Config, er
 			return nil, errors.New("field remote_read is not allowed in agent mode")
 		}
 	}
+	// toanbs
+	if cfg.TimeSeriesLimit <= 0 {
+		cfg.TimeSeriesLimit = 1000000 // Default limit
+	}
 
 	cfg.SetDirectory(filepath.Dir(filename))
 	return cfg, nil
@@ -273,6 +277,8 @@ type Config struct {
 	OTLPConfig         OTLPConfig           `yaml:"otlp,omitempty"`
 
 	loaded bool // Certain methods require configuration to use Load validation.
+	// toanbs
+	TimeSeriesLimit uint64 `yaml:"time_series_limit"`
 }
 
 // SetDirectory joins any relative file paths with dir.
